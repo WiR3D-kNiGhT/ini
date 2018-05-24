@@ -149,9 +149,9 @@ test('decode from file', function (t) {
 })
 
 test('decode from file with array', function (t) {
-    var d = i.decode(data, [])
-    t.deepEqual(d, expectD)
-    t.end()
+  var d = i.decode(data, [])
+  t.deepEqual(d, expectD)
+  t.end()
 })
 
 test('decode with zendBoolean', function (t) {

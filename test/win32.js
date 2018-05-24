@@ -8,7 +8,7 @@ t.equal(res, '[foo]\r\nbar=baz\r\n')
 t.equal(ini.encode({bar: 'baz'}, 'foo'), '[foo]\r\nbar=baz\r\n')
 
 t.same(ini.decode('=just junk!\r\n[foo]\r\nbar\r\n'),
-       { foo: { bar: true }})
+  { foo: { bar: true }})
 
 t.same(ini.decode('[x]\r\ny=1\r\ny[]=2\r\n'), {
   x: {
