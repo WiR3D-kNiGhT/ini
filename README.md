@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/rijnhard/ini2.svg?branch=master)](https://travis-ci.com/rijnhard/ini2)
+
 An ini format parser and serializer for node.
 
 Sections are treated as nested objects. Items before the first
