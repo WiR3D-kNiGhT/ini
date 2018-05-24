@@ -1,10 +1,30 @@
 exports.parse = exports.decode = decode
+
 exports.stringify = exports.encode = encode
 
 exports.safe = safe
 exports.unsafe = unsafe
 
-var eol = process.platform === 'win32' ? '\r\n' : '\n'
+exports.filters = {
+  decode: {
+    zendBoolean: function (key, value) {
+      if (typeof value !== 'string' || value.length > 5) return {key: key, value: value}
+      switch (value.toLowerCase()) {
+        case 'on':
+        case 'true':
+        case 'yes': return {key: key, value: true}
+        case 'off':
+        case 'no':
+        case 'false':
+        case 'none': return {key: key, value: false}
+        default: return {key: key, value: value}
+      }
+    }
+  }
+}
+
+var eol = typeof process !== 'undefined' &&
+  process.platform === 'win32' ? '\r\n' : '\n'
 
 function encode (obj, opt) {
   var children = []
@@ -59,12 +79,13 @@ function dotSplit (str) {
   return str.replace(/\1/g, '\u0002LITERAL\\1LITERAL\u0002')
     .replace(/\\\./g, '\u0001')
     .split(/\./).map(function (part) {
-    return part.replace(/\1/g, '\\.')
+      return part.replace(/\1/g, '\\.')
       .replace(/\2LITERAL\\1LITERAL\2/g, '\u0001')
-  })
+    })
 }
 
-function decode (str) {
+function decode (str, filters) {
+  filters = Array.isArray(filters) ? filters : (typeof filters !== 'undefined' ? [filters] : [])
   var out = {}
   var p = out
   var section = null
@@ -82,7 +103,7 @@ function decode (str) {
       return
     }
     var key = unsafe(match[2])
-    var value = match[3] ? unsafe((match[4] || '')) : true
+    var value = match[3] ? unsafe(match[4]) : true
     switch (value) {
       case 'true':
       case 'false':
@@ -98,6 +119,12 @@ function decode (str) {
         p[key] = [p[key]]
       }
     }
+
+    filters.forEach(function (filter) {
+      var filtered = filter(key, value)
+      value = filtered.value
+      key = filtered.key
+    })
 
     // safeguard against resetting a previously defined
     // array by accidentally forgetting the brackets
@@ -149,9 +176,9 @@ function safe (val) {
     val.match(/^\[/) ||
     (val.length > 1 &&
      isQuoted(val)) ||
-    val !== val.trim()) ?
-      JSON.stringify(val) :
-      val.replace(/;/g, '\\;').replace(/#/g, '\\#')
+    val !== val.trim())
+      ? JSON.stringify(val)
+      : val.replace(/;/g, '\\;').replace(/#/g, '\\#')
 }
 
 function unsafe (val, doUnesc) {
@@ -186,7 +213,7 @@ function unsafe (val, doUnesc) {
     if (esc) {
       unesc += '\\'
     }
-    return unesc
+    return unesc.trim()
   }
   return val
 }
